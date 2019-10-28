@@ -5,7 +5,6 @@
 #include "mycl.h"
 #include "ImageProcDiscardBlank.h"
 using namespace std;
-using namespace cv;
 
 Cl_Resource cl_res;
 char cl_code_src[] =
@@ -549,7 +548,7 @@ void points_zoom(vector<Point>& points, double scale_h, double scale_v)
 		p.y *= scale_v;
 	}
 }
-#define RE 8
+#define RE 1
 
 bool isBlankPage(Mat& src, const vector<Point>& contours)
 {
@@ -823,18 +822,76 @@ void getFiles(string path, vector<string>& files)
 }
 #endif
 
+#include <fstream>
+
+void encode_mat2tiff(const Mat& src, vector<uchar>& encode)
+{
+	imencode(".jpg", src, encode);
+
+	uchar* buffer = new uchar[encode.size()];
+	for (size_t i = 0, length = encode.size(); i < length; i++)
+	{
+		buffer[i] = encode[i];
+	}
+	ofstream  file;
+	file.open("tttt.jpg", ios::app | ios::out);
+	file.write((char*)buffer, encode.size());
+	delete[] buffer;
+	file.close();
+}
+/*
+void a(uchar* data, int im_width, int im_height, vector<Mat>& mv)
+{
+	cv::Mat mat(im_height, im_width * 5, CV_8UC1, data);
+
+	cv::Mat mat_R		= mat(Rect(im_width * 0, 0, im_width, im_height)).clone();
+	cv::Mat mat_G		= mat(Rect(im_width * 1, 0, im_width, im_height)).clone();
+	cv::Mat mat_B		= mat(Rect(im_width * 2, 0, im_width, im_height)).clone();
+	cv::Mat mat_Block   = mat(Rect(im_width * 3, 0, im_width, im_height)).clone();
+	cv::Mat mat_UV		= mat(Rect(im_width * 4, 0, im_width, im_height)).clone();
+
+	mv.push_back(mat_R);
+	mv.push_back(mat_G);
+	mv.push_back(mat_B);
+	mv.push_back(mat_Block);
+	mv.push_back(mat_UV);
+}
+
+void join(const vector<Mat>& mv, Mat& dst)
+{
+	int im_width = mv[0].cols;
+	int im_height = 0;
+	for (const Mat& item : mv)
+	{
+		im_height += item.cols;
+	}
+
+	dst = Mat(im_height, im_width, CV_8UC(mv[0].channels()));
+	int offset_y = 0;
+	for (int i = 0; i < mv.size(); i++)
+	{
+		Mat roi = dst(Rect(Point(0, offset_y), mv[i].size()));
+		mv[i].copyTo(roi);
+
+		offset_y += mv[i].rows;
+	}
+}
+*/
 int main()
 {
 	int b = init_GPU_Environment();
 
-	Mat img = imread("0.jpg")(Rect(0, 0, 2592, 2697)).clone();
+	Mat img = imread("0.jpg", IMREAD_COLOR);
+	//vector<uchar> encode;
+	//encode_mat2tiff(img, encode);
+
 	clock_t start, end;
 	start = clock();
 	Mat dst;
-	rotated_and_cut(img, dst, RC_ROTATED | RC_CUT | RC_BLACK_BACKGROUD | 0, 40, 7, 4);
+	rotated_and_cut(img, dst, RC_ROTATED | RC_CUT | 0 | 0, 40, 1, 2);
 	end = clock();
 	printf("time = %f\n", (double)(end - start) / CLOCKS_PER_SEC);
-	imwrite("00.bmp", dst);
+	imwrite("0.bmp", dst);
 #if 1
 #else
 	vector<string> filenames;

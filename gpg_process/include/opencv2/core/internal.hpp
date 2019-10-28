@@ -104,6 +104,10 @@ CV_INLINE IppiSize ippiSize(const cv::Size & _size)
     return size;
 }
 
+#if IPP_VERSION_MAJOR >= 9 // IPP 9+ is not supported
+#undef HAVE_IPP
+#undef IPP_VERSION_MAJOR
+#endif
 #endif
 
 #ifndef IPPI_CALL
@@ -153,7 +157,7 @@ CV_INLINE IppiSize ippiSize(const cv::Size & _size)
 # include "arm_neon.h"
 # define CV_NEON 1
 # define CPU_HAS_NEON_FEATURE (true)
-#elif defined(__ARM_NEON__)
+#elif defined(__ARM_NEON__) || defined(__ARM_NEON)
 #  include <arm_neon.h>
 #  define CV_NEON 1
 #  define CPU_HAS_NEON_FEATURE (true)
@@ -292,7 +296,7 @@ namespace cv
         return classname##_info_var; \
     } \
     \
-    static ::cv::AlgorithmInfo& classname##_info_auto = classname##_info(); \
+    CV_ATTR_USED static ::cv::AlgorithmInfo& classname##_info_auto = classname##_info(); \
     \
     ::cv::AlgorithmInfo* classname::info() const \
     { \
@@ -534,7 +538,7 @@ void func_name( T *array, size_t total, user_data_type aux )                    
     }                                                                               \
     stack[48];                                                                      \
                                                                                     \
-    aux = aux;                                                                      \
+    (void)aux;                                                                      \
                                                                                     \
     if( total <= 1 )                                                                \
         return;                                                                     \

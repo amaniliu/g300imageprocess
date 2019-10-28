@@ -1,6 +1,3 @@
-/*! \file core.hpp
-    \brief The Core Functionality
- */
 /*M///////////////////////////////////////////////////////////////////////////////////////
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
@@ -230,9 +227,9 @@ CV_EXPORTS ErrorCallback redirectError( ErrorCallback errCallback,
 
 CV_EXPORTS void glob(String pattern, std::vector<String>& result, bool recursive = false);
 
-CV_EXPORTS void setNumThreads(int nthreads);
-CV_EXPORTS int getNumThreads();
-CV_EXPORTS int getThreadNum();
+CV_EXPORTS_W void setNumThreads(int nthreads);
+CV_EXPORTS_W int getNumThreads();
+CV_EXPORTS_W int getThreadNum();
 
 CV_EXPORTS_W const string& getBuildInformation();
 
@@ -410,7 +407,7 @@ public:
   The class is specialized for each fundamental numerical data type supported by OpenCV.
   It provides DataDepth<T>::value constant.
 */
-template<typename _Tp> class DataDepth {};
+template<typename _Tp> class DataDepth { public: enum { value = -1, fmt = 0 }; };
 
 template<> class DataDepth<bool> { public: enum { value = CV_8U, fmt=(int)'u' }; };
 template<> class DataDepth<uchar> { public: enum { value = CV_8U, fmt=(int)'u' }; };
@@ -716,9 +713,6 @@ public:
 };
 
 
-/*!
-  \typedef
-*/
 typedef Complex<float> Complexf;
 typedef Complex<double> Complexd;
 
@@ -885,14 +879,11 @@ public:
 };
 
 
-/*!
-  \typedef
-
-  shorter aliases for the most popular cv::Point_<>, cv::Size_<> and cv::Rect_<> specializations
-*/
 typedef Point_<int> Point2i;
+typedef Point_<int64> Point2l;
 typedef Point2i Point;
 typedef Size_<int> Size2i;
+typedef Size_<int64> Size2l;
 typedef Size_<double> Size2d;
 typedef Size2i Size;
 typedef Rect_<int> Rect;
@@ -921,8 +912,10 @@ public:
 
     //! returns 4 vertices of the rectangle
     void points(Point2f pts[]) const;
-    //! returns the minimal up-right rectangle containing the rotated rectangle
+    //! returns the minimal up-right integer rectangle containing the rotated rectangle
     Rect boundingRect() const;
+    //! returns the minimal (exact) floating point rectangle containing the rotated rectangle, not intended for use with images
+    Rect_<float> boundingRect2f() const;
     //! conversion to the old-style CvBox2D structure
     operator CvBox2D() const;
 
@@ -1304,6 +1297,38 @@ public:
     int* refcount; //< the associated reference counter
 };
 
+template<typename T>
+Ptr<T> makePtr();
+
+template<typename T, typename A1>
+Ptr<T> makePtr(const A1& a1);
+
+template<typename T, typename A1, typename A2>
+Ptr<T> makePtr(const A1& a1, const A2& a2);
+
+template<typename T, typename A1, typename A2, typename A3>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9);
+
+template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
+Ptr<T> makePtr(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10);
 
 //////////////////////// Input/Output Array Arguments /////////////////////////////////
 
@@ -1622,8 +1647,6 @@ public:
    cv::Mat::rows contains the number of matrix rows and cv::Mat::cols - the number of matrix columns. There is yet another member,
    cv::Mat::step that is used to actually compute address of a matrix element. cv::Mat::step is needed because the matrix can be
    a part of another matrix or because there can some padding space in the end of each row for a proper alignment.
-
-   \image html roi.png
 
    Given these parameters, address of the matrix element M_{ij} is computed as following:
 
@@ -2266,7 +2289,7 @@ CV_EXPORTS_W void absdiff(InputArray src1, InputArray src2, OutputArray dst);
 //! set mask elements for those array elements which are within the element-specific bounding box (dst = lowerb <= src && src < upperb)
 CV_EXPORTS_W void inRange(InputArray src, InputArray lowerb,
                           InputArray upperb, OutputArray dst);
-//! compares elements of two arrays (dst = src1 <cmpop> src2)
+//! compares elements of two arrays (dst = src1 \<cmpop\> src2)
 CV_EXPORTS_W void compare(InputArray src1, InputArray src2, OutputArray dst, int cmpop);
 //! computes per-element minimum of two arrays (dst = min(src1, src2))
 CV_EXPORTS_W void min(InputArray src1, InputArray src2, OutputArray dst);
@@ -2574,6 +2597,9 @@ CV_EXPORTS_W double kmeans( InputArray data, int K, CV_OUT InputOutputArray best
 //! returns the thread-local Random number generator
 CV_EXPORTS RNG& theRNG();
 
+//! sets state of the thread-local Random number generator
+CV_EXPORTS_W void setRNGSeed(int seed);
+
 //! returns the next unifomly-distributed random number of the specified type
 template<typename _Tp> static inline _Tp randu() { return (_Tp)theRNG(); }
 
@@ -2620,6 +2646,44 @@ CV_EXPORTS_W void ellipse(CV_IN_OUT Mat& img, Point center, Size axes,
 CV_EXPORTS_W void ellipse(CV_IN_OUT Mat& img, const RotatedRect& box, const Scalar& color,
                         int thickness=1, int lineType=8);
 
+/* ----------------------------------------------------------------------------------------- */
+/* ADDING A SET OF PREDEFINED MARKERS WHICH COULD BE USED TO HIGHLIGHT POSITIONS IN AN IMAGE */
+/* ----------------------------------------------------------------------------------------- */
+
+//! Possible set of marker types used for the drawMarker function
+enum MarkerTypes
+{
+    MARKER_CROSS = 0,           // A crosshair marker shape
+    MARKER_TILTED_CROSS = 1,    // A 45 degree tilted crosshair marker shape
+    MARKER_STAR = 2,            // A star marker shape, combination of cross and tilted cross
+    MARKER_DIAMOND = 3,         // A diamond marker shape
+    MARKER_SQUARE = 4,          // A square marker shape
+    MARKER_TRIANGLE_UP = 5,     // An upwards pointing triangle marker shape
+    MARKER_TRIANGLE_DOWN = 6    // A downwards pointing triangle marker shape
+};
+
+/** @brief Draws a marker on a predefined position in an image.
+
+The function drawMarker draws a marker on a given position in the image. For the moment several
+marker types are supported (`MARKER_CROSS`, `MARKER_TILTED_CROSS`, `MARKER_STAR`, `MARKER_DIAMOND`, `MARKER_SQUARE`,
+`MARKER_TRIANGLE_UP` and `MARKER_TRIANGLE_DOWN`).
+
+@param img Image.
+@param position The point where the crosshair is positioned.
+@param markerType The specific type of marker you want to use, see
+@param color Line color.
+@param thickness Line thickness.
+@param line_type Type of the line, see cv::LineTypes
+@param markerSize The length of the marker axis [default = 20 pixels]
+ */
+CV_EXPORTS_W void drawMarker(CV_IN_OUT Mat& img, Point position, const Scalar& color,
+                             int markerType = MARKER_CROSS, int markerSize=20, int thickness=1,
+                             int line_type=8);
+
+/* ----------------------------------------------------------------------------------------- */
+/* END OF MARKER SECTION */
+/* ----------------------------------------------------------------------------------------- */
+
 //! draws a filled convex polygon in the image
 CV_EXPORTS void fillConvexPoly(Mat& img, const Point* pts, int npts,
                                const Scalar& color, int lineType=8,
@@ -2649,6 +2713,7 @@ CV_EXPORTS_W void polylines(InputOutputArray img, InputArrayOfArrays pts,
 
 //! clips the line segment by the rectangle Rect(0, 0, imgSize.width, imgSize.height)
 CV_EXPORTS bool clipLine(Size imgSize, CV_IN_OUT Point& pt1, CV_IN_OUT Point& pt2);
+CV_EXPORTS bool clipLine(Size2l imgSize, CV_IN_OUT Point2l& pt1, CV_IN_OUT Point2l& pt2);
 
 //! clips the line segment by the rectangle imgRect
 CV_EXPORTS_W bool clipLine(Rect imgRect, CV_OUT CV_IN_OUT Point& pt1, CV_OUT CV_IN_OUT Point& pt2);
@@ -2686,6 +2751,9 @@ public:
 CV_EXPORTS_W void ellipse2Poly( Point center, Size axes, int angle,
                                 int arcStart, int arcEnd, int delta,
                                 CV_OUT vector<Point>& pts );
+CV_EXPORTS void ellipse2Poly( Point2d center, Size2d axes, int angle,
+                              int arcStart, int arcEnd, int delta,
+                              CV_OUT vector<Point2d>& pts );
 
 enum
 {
@@ -2731,7 +2799,7 @@ CV_EXPORTS_W Size getTextSize(const string& text, int fontFace,
 
  While cv::Mat is sufficient in most cases, cv::Mat_ can be more convenient if you use a lot of element
  access operations and if you know matrix type at compile time.
- Note that cv::Mat::at<_Tp>(int y, int x) and cv::Mat_<_Tp>::operator ()(int y, int x) do absolutely the
+ Note that cv::Mat::at\<_Tp\>(int y, int x) and cv::Mat_\<_Tp\>::operator ()(int y, int x) do absolutely the
  same thing and run at the same speed, but the latter is certainly shorter:
 
  \code
@@ -3180,6 +3248,9 @@ public:
     //! returns read-only pointer to the real buffer, stack-allocated or head-allocated
     operator const _Tp* () const;
 
+    //! returns number of allocated elements
+    size_t getSize() const;
+
 protected:
     //! pointer to the real buffer, can point to buf if the buffer is small enough
     _Tp* ptr;
@@ -3443,6 +3514,7 @@ public:
     void convertTo( SparseMat& m, int rtype, double alpha=1 ) const;
     //! converts sparse matrix to dense n-dim matrix with optional type conversion and scaling.
     /*!
+      \param m Destination matrix
       \param rtype The output matrix data type. When it is =-1, the output array will have the same data type as (*this)
       \param alpha The scale factor
       \param beta The optional delta added to the scaled values before the conversion
